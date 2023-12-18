@@ -111,11 +111,12 @@ config = BertConfig(
     num_attention_heads=2,
     intermediate_size=512,
     bands=8,
+    table_size=128,
     num_hashes=4
 )
 
-model = BertLSHModel(config)
-# model = BertModel(config)
+# model = BertLSHModel(config)
+model = BertModel(config)
 
 # Generate some random data to feed the model
 # Let's assume a batch size of 1 and a sequence length of 10 for this example
@@ -131,4 +132,4 @@ with torch.no_grad():  # Ensure no gradients are calculated
     output = model(random_input, attention_mask=attention_mask)
 
 # Inspect the output
-print(output)
+# print(output)
