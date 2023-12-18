@@ -1,0 +1,7 @@
+.vscode/
+algoml_bookcorpus_10p/
+algoml_bookcorpus_bottom_10p/
+algoml_bookcorpus.hf/
+tokenizer/
+transformers/
+**/test-mlm/
