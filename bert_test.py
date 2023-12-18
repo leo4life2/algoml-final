@@ -111,7 +111,7 @@ config = BertConfig(
     num_attention_heads=2,
     intermediate_size=512,
     bands=8,
-    table_size=128,
+    table_size=64,
     num_hashes=4
 )
 
