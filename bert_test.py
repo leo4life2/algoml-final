@@ -110,9 +110,9 @@ config = BertConfig(
     num_hidden_layers=2,
     num_attention_heads=2,
     intermediate_size=512,
-    bands=8,
-    table_size=64,
-    num_hashes=4
+    bands=2,
+    table_size=256,
+    num_hashes=1
 )
 
 model = BertLSHModel(config)

@@ -14,7 +14,7 @@ class LSH:
         # Initialize random coefficients for each hash function
         self.hash_coefficients = torch.randint(0, table_size, (num_hashes, bands))
         self.bucket_table = [{} for _ in range(self.num_hashes)] # use a dictionary so we don't store buckets with nothing at all
-
+        
     def _uniform_random_hash(self, vector, hash_idx):
         """Apply a uniform random hash function to the vector using vectorized operations."""
         # Vectorized computation of the hash value
@@ -22,50 +22,74 @@ class LSH:
         hash_value = hash_values.sum() % self.table_size
         return hash_value.item()
 
-    def _hash_to_table(self, vector, vector_ix):
-        """Compute the hashes for a given vector using all hash functions."""
+    def _hash_to_table(self, vectors):
+        """Compute the hashes for all vectors using all hash functions."""
+        # Reshape random_vectors to combine num_hashes and bands for batch matrix multiplication
+        random_vectors_reshaped = self.random_vectors.view(-1, self.feature_size)
+        # Perform batch matrix multiplication
+        sign_vectors = torch.sign(torch.matmul(random_vectors_reshaped, vectors.T))
+        # Reshape sign_vectors back to [num_hashes, num_vectors, bands]
+        sign_vectors = sign_vectors.view(self.num_hashes, self.bands, -1).transpose(1, 2)
+
+        # Expand hash_coefficients to match the dimensions of sign_vectors
+        expanded_hash_coefficients = self.hash_coefficients.view(self.num_hashes, 1, self.bands).expand(-1, vectors.shape[0], -1)
+
+        # Perform the multiplication operation and sum across bands
+        hash_values = ((sign_vectors > 0) * expanded_hash_coefficients).sum(dim=2) % self.table_size
+
+        # Populate the bucket_table
         for hash_f_ix in range(self.num_hashes):
-            sign_vector = sign_hash_function(self.random_vectors[hash_f_ix], vector)
-            bucket_ix = self._uniform_random_hash(sign_vector, hash_f_ix)
-            bucket = self.bucket_table[hash_f_ix].setdefault(bucket_ix, set())
-            bucket.add(vector_ix)
+            unique_hashes, inverse_indices, counts = torch.unique(hash_values[hash_f_ix], return_inverse=True, return_counts=True)
+            for i, hash_val in enumerate(unique_hashes):
+                indices = torch.where(inverse_indices == i)[0]
+                if len(indices) > 1:
+                    self.bucket_table[hash_f_ix].setdefault(hash_val.item(), set()).update(indices.tolist())
+
 
     def do_lsh(self, vectors):
         """Perform LSH on all vectors and return the collision matrix using vectorized operations."""
         num_vectors = vectors.shape[0]
-        collision_matrix = torch.zeros((num_vectors, num_vectors))
+        collision_matrix = torch.zeros((num_vectors, num_vectors), device=vectors.device)
 
-        # Hash vectors to the bucket table
-        for i in range(num_vectors):
-            self._hash_to_table(vectors[i], i)
-        
+        self._hash_to_table(vectors)
+
         # Construct collision_matrix
         for hash_index, bucket_dict in enumerate(self.bucket_table):
             for bucket_key, vector_indices_set in bucket_dict.items():
-                vector_indices_list = list(vector_indices_set)
+                vector_indices = torch.tensor(list(vector_indices_set), device=vectors.device)
+                collision_matrix.index_put_((vector_indices[:, None], vector_indices), torch.tensor(1, dtype=collision_matrix.dtype, device=vectors.device))
 
-                # Loop through every unique pair of indices
-                for i in range(len(vector_indices_list)):
-                    for j in range(i + 1, len(vector_indices_list)):
-                        i1 = vector_indices_list[i]
-                        i2 = vector_indices_list[j]
-                        
-                        collision_matrix[i1, i2] = 1
-                        collision_matrix[i2, i1] = 1
+        return collision_matrix[:num_vectors // 2, num_vectors // 2:] # only interested in Q vs K indices.
+    
+import time
+class Timer:
+    def __enter__(self):
+        self.start = time.perf_counter()
+        return self
 
-        return collision_matrix
+    def __exit__(self, *args):
+        self.end = time.perf_counter()
+        self.interval = self.end - self.start
 
-# Example code to demonstrate usage
-# Initialize LSH
-# bands 8-16
-# m 100 - 500
-# nhashes 4-8
-lsh = LSH(bands=8, table_size=10, num_hashes=4, feature_size=128)
+    def __str__(self):
+        return f"{self.interval:.10f} seconds"
 
-# Example vectors
-vectors = torch.randn(10,128)
+torch.manual_seed(0)
+lsh = LSH(8, 64, 4, 64)
 
-# Perform LSH
-collision_matrix = lsh.do_lsh(vectors)
-print(collision_matrix)
+torch.manual_seed(0)
+lsh2 = LSH2(8, 64, 4, 64)
 
+stacked = torch.rand((20, 64))
+
+with Timer() as t:
+    old_res = lsh.do_lsh(stacked)
+
+print("Old time", t)
+
+with Timer() as t:
+    new_res = lsh2.do_lsh(stacked)
+    
+print("New time", t)
+
+print("All close?", old_res.allclose(new_res))

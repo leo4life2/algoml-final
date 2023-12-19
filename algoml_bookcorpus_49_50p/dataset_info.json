@@ -1,0 +1,51 @@
+{
+  "builder_name": "bookcorpus",
+  "citation": "@InProceedings{Zhu_2015_ICCV,\n    title = {Aligning Books and Movies: Towards Story-Like Visual Explanations by Watching Movies and Reading Books},\n    author = {Zhu, Yukun and Kiros, Ryan and Zemel, Rich and Salakhutdinov, Ruslan and Urtasun, Raquel and Torralba, Antonio and Fidler, Sanja},\n    booktitle = {The IEEE International Conference on Computer Vision (ICCV)},\n    month = {December},\n    year = {2015}\n}\n",
+  "config_name": "plain_text",
+  "dataset_name": "bookcorpus",
+  "dataset_size": 4835329162,
+  "description": "Books are a rich source of both fine-grained information, how a character, an object or a scene looks like, as well as high-level semantics, what someone is thinking, feeling and how these states evolve through a story.This work aims to align books to their movie releases in order to providerich descriptive explanations for visual content that go semantically farbeyond the captions available in current datasets. ",
+  "download_checksums": {
+    "https://storage.googleapis.com/huggingface-nlp/datasets/bookcorpus/bookcorpus.tar.bz2": {
+      "num_bytes": 1179510242,
+      "checksum": null
+    }
+  },
+  "download_size": 1179510242,
+  "features": {
+    "text": {
+      "dtype": "string",
+      "_type": "Value"
+    }
+  },
+  "homepage": "https://yknzhu.wixsite.com/mbweb",
+  "license": "",
+  "size_in_bytes": 6014839404,
+  "splits": {
+    "train": {
+      "name": "train",
+      "num_bytes": 4835329162,
+      "num_examples": 74004228,
+      "shard_lengths": [
+        7804000,
+        7646000,
+        7511000,
+        7869000,
+        7455000,
+        7703000,
+        7143000,
+        7664000,
+        8004000,
+        5205228
+      ],
+      "dataset_name": "bookcorpus"
+    }
+  },
+  "version": {
+    "version_str": "1.0.0",
+    "description": "",
+    "major": 1,
+    "minor": 0,
+    "patch": 0
+  }
+}

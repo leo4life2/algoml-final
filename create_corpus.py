@@ -12,16 +12,16 @@ print(f"Welcome, '{user_id}' \n")
 # Load the dataset
 full_dataset = load_dataset("bookcorpus")
 
-# Calculate the number of rows for 10%
+# Calculate the number of rows for 1%
 num_rows = len(full_dataset['train'])
-rows_10p = int(num_rows * 0.1)
+rows_1p = int(num_rows * 0.01)
 
-# Calculate the starting index for the bottom 10%
-start_index = int(num_rows * 0.9)
+# Calculate the starting index for the 49th percent
+start_index = int(num_rows * 0.49)
 
 # Take the bottom 10% of rows
-subset_dataset = full_dataset['train'].select(range(start_index, num_rows))
+subset_dataset = full_dataset['train'].select(range(start_index, start_index + rows_1p))
 # Save to disk
-subset_dataset.save_to_disk("algoml_bookcorpus_bottom_10p")
-dataset_repo_id = f"{user_id}/algoml_bookcorpus_bottom_10p"
+subset_dataset.save_to_disk("algoml_bookcorpus_49_50p")
+dataset_repo_id = f"{user_id}/algoml_bookcorpus_49_50p"
 subset_dataset.push_to_hub(dataset_repo_id)
