@@ -104,32 +104,56 @@ print(f"Welcome, '{user_id}' \n")
 #         tokenized_datasets = load_dataset(f"{user_id}/processed_bert_dataset")
 #         tokenized_datasets.save_to_disk("algoml_bookcorpus.hf")
 
-config = BertConfig(
-    vocab_size=32_000,
-    hidden_size=128,
-    num_hidden_layers=2,
-    num_attention_heads=2,
-    intermediate_size=512,
-    bands=2,
-    table_size=256,
-    num_hashes=1
-)
-
-model = BertLSHModel(config)
-# model = BertModel(config)
-
 # Generate some random data to feed the model
 # Let's assume a batch size of 1 and a sequence length of 10 for this example
-batch_size = 1
-sequence_length = 10
-random_input = torch.randint(config.vocab_size, (batch_size, sequence_length))
+from transformers.models.bert.modeling_lsh_bert import Timer
+# from transformers.models.bert.modeling_bert import Timer
 
-# Attention mask (assuming all tokens are not padding)
-attention_mask = torch.ones(batch_size, sequence_length)
+timer = Timer()
 
-# Run the model
-with torch.no_grad():  # Ensure no gradients are calculated
-    output = model(random_input, attention_mask=attention_mask)
+results = []
 
+for bands in range(2, 9, 2):
+    for table_size in range(64, 257, 64):
+        for num_hashes in range(1, 5):
+            for _ in range(1):
+                # Run the model
+                config = BertConfig(
+                    vocab_size=32_000,
+                    hidden_size=128,
+                    num_hidden_layers=2,
+                    num_attention_heads=2,
+                    intermediate_size=512,
+                    bands=bands,
+                    table_size=table_size,
+                    num_hashes=num_hashes
+                )
+                
+                batch_size = 1
+                sequence_length = 10
+                random_input = torch.randint(config.vocab_size, (batch_size, sequence_length))
+
+                # Attention mask (assuming all tokens are not padding)
+                attention_mask = torch.ones(batch_size, sequence_length)
+                
+                timer.reset()
+                model = BertLSHModel(config)
+                # model = BertModel(config)
+                with torch.no_grad():  # Ensure no gradients are calculated
+                    output = model(random_input, attention_mask=attention_mask)
+                    
+                # Collect results
+                result = {
+                    "bands": bands,
+                    "table_size": table_size,
+                    "num_hashes": num_hashes,
+                    "flops": timer.flops  # Assuming timer.flops returns the required information
+                }
+                results.append(result)
+
+for res in results:
+    print(res)
+
+# print(f"BERTLSH: {timer.dot_prods/100}")
 # Inspect the output
 # print(output)
