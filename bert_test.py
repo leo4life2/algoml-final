@@ -111,48 +111,72 @@ from transformers.models.bert.modeling_lsh_bert import Timer
 
 timer = Timer()
 
-results = []
-
-for bands in range(2, 9, 2):
-    for table_size in range(64, 257, 64):
-        for num_hashes in range(1, 5):
-            for _ in range(1):
-                # Run the model
-                config = BertConfig(
+config = BertConfig(
                     vocab_size=32_000,
                     hidden_size=128,
                     num_hidden_layers=2,
                     num_attention_heads=2,
                     intermediate_size=512,
-                    bands=bands,
-                    table_size=table_size,
-                    num_hashes=num_hashes
+                    bands=2,
+                    table_size=64,
+                    num_hashes=1
                 )
                 
-                batch_size = 1
-                sequence_length = 10
-                random_input = torch.randint(config.vocab_size, (batch_size, sequence_length))
+batch_size = 1
+sequence_length = 10
+random_input = torch.randint(config.vocab_size, (batch_size, sequence_length))
 
-                # Attention mask (assuming all tokens are not padding)
-                attention_mask = torch.ones(batch_size, sequence_length)
+# Attention mask (assuming all tokens are not padding)
+attention_mask = torch.ones(batch_size, sequence_length)
+
+timer.reset()
+# model = BertLSHModel(config)
+model = BertModel(config)
+with torch.no_grad():  # Ensure no gradients are calculated
+    output = model(random_input, attention_mask=attention_mask)
+
+# results = []
+
+# for bands in range(2, 9, 2):
+#     for table_size in range(64, 257, 64):
+#         for num_hashes in range(1, 5):
+#             for _ in range(1):
+#                 # Run the model
+#                 config = BertConfig(
+#                     vocab_size=32_000,
+#                     hidden_size=128,
+#                     num_hidden_layers=2,
+#                     num_attention_heads=2,
+#                     intermediate_size=512,
+#                     bands=bands,
+#                     table_size=table_size,
+#                     num_hashes=num_hashes
+#                 )
                 
-                timer.reset()
-                model = BertLSHModel(config)
-                # model = BertModel(config)
-                with torch.no_grad():  # Ensure no gradients are calculated
-                    output = model(random_input, attention_mask=attention_mask)
-                    
-                # Collect results
-                result = {
-                    "bands": bands,
-                    "table_size": table_size,
-                    "num_hashes": num_hashes,
-                    "flops": timer.flops  # Assuming timer.flops returns the required information
-                }
-                results.append(result)
+#                 batch_size = 1
+#                 sequence_length = 10
+#                 random_input = torch.randint(config.vocab_size, (batch_size, sequence_length))
 
-for res in results:
-    print(res)
+#                 # Attention mask (assuming all tokens are not padding)
+#                 attention_mask = torch.ones(batch_size, sequence_length)
+                
+#                 timer.reset()
+#                 model = BertLSHModel(config)
+#                 # model = BertModel(config)
+#                 with torch.no_grad():  # Ensure no gradients are calculated
+#                     output = model(random_input, attention_mask=attention_mask)
+                    
+#                 # Collect results
+#                 result = {
+#                     "bands": bands,
+#                     "table_size": table_size,
+#                     "num_hashes": num_hashes,
+#                     "KFLOPs": timer.flops / 2000  # Assuming timer.flops returns the required information
+#                 }
+#                 results.append(result)
+
+# for res in results:
+#     print(res)
 
 # print(f"BERTLSH: {timer.dot_prods/100}")
 # Inspect the output
